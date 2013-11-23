@@ -8,6 +8,18 @@ namespace Underlink
 {
     class Router
     {
+        UInt128 ThisNodeID;
+        Node ThisNode;
+        Bucket KnownNodes;
+        LocalEndpoint Endpoint;
 
+        public Router()
+        {
+            ThisNodeID = new UInt128();
+            ThisNode = new Node(ThisNodeID);
+
+            KnownNodes = new Bucket();
+            KnownNodes.AddNode(ThisNode);
+        }
     }
 }

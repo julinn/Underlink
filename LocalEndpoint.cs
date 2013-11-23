@@ -6,11 +6,9 @@ using System.Threading.Tasks;
 
 namespace Underlink
 {
-    class Program
+    abstract class LocalEndpoint
     {
-        static void Main(string[] args)
-        {
-            Router RouterInstance = new Router();
-        }
+        public abstract byte[] Write(byte[] Buffer);
+        public abstract byte[] Read();
     }
 }
