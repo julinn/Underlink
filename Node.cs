@@ -17,7 +17,7 @@ namespace Underlink
 
         public UInt128 GetDistance(Node CompareNode)
         {
-            return UInt128Functions.Xor(this.Address, CompareNode.Address);
+            return this.Address.Xor(CompareNode.Address);
         }
     }
 }

@@ -10,41 +10,74 @@ namespace Underlink
     {
         public UInt64 Big;
         public UInt64 Small;
-    }
 
-    public static class UInt128Functions
-    {
-        public static bool Compare(UInt128 One, UInt128 Two)
+        public UInt128(UInt64 Big, UInt64 Small)
         {
-            return One.Big == Two.Big &&
-                   One.Small == Two.Small;
+            this.Big = Big;
+            this.Small = Small;
         }
 
-        public static bool Equals(UInt128 One, UInt128 Two)
+        public override bool Equals(UInt128 Obj)
         {
-            return Compare(One, Two);
+ 	        return Obj.Big == this.Big &&
+                   Obj.Small == this.Small;
         }
 
-        public static bool GreaterThan(UInt128 One, UInt128 Two)
+        public static bool operator ==(UInt128 Left, UInt128 Right)
         {
-            return One.Big > Two.Big ||
-                   (One.Big == Two.Big && One.Small > Two.Small);
+            return Left.Equals(Right);
         }
 
-        public static bool LessThan(UInt128 One, UInt128 Two)
+        public static bool operator !=(UInt128 Left, UInt128 Right)
         {
-            return One.Big < Two.Big ||
-                   (One.Big == Two.Big && One.Small < Two.Small);
+            return !Left.Equals(Right);
         }
 
-        public static UInt128 Xor(UInt128 One, UInt128 Two)
+        public bool GreaterThan(UInt128 Obj)
+        {
+            return this.Big > Obj.Big ||
+                   (this.Big == Obj.Big && this.Small > Obj.Small);
+        }
+
+        public static bool operator >(UInt128 Left, UInt128 Right)
+        {
+            return Left.GreaterThan(Right);
+        }
+
+        public static bool operator >=(UInt128 Left, UInt128 Right)
+        {
+            return Left.GreaterThan(Right) || Left.Equals(Right);
+        }
+
+        public bool LessThan(UInt128 Obj)
+        {
+            return this.Big < Obj.Big ||
+                   (this.Big == Obj.Big && this.Small < Obj.Small);
+        }
+
+        public static bool operator <(UInt128 Left, UInt128 Right)
+        {
+            return Left.LessThan(Right);
+        }
+
+        public static bool operator <=(UInt128 Left, UInt128 Right)
+        {
+            return Left.GreaterThan(Right) || Left.Equals(Right);
+        }
+
+        public UInt128 Xor(UInt128 Obj)
         {
             UInt128 ReturnValue;
 
-            ReturnValue.Big = One.Big ^ Two.Big;
-            ReturnValue.Small = One.Small ^ Two.Small;
+            ReturnValue.Big = this.Big ^ Obj.Big;
+            ReturnValue.Small = this.Small ^ Obj.Small;
 
             return ReturnValue;
+        }
+
+        public static UInt128 operator ^(UInt128 Left, UInt128 Right)
+        {
+            return Left.Xor(Right);
         }
     }
 }
