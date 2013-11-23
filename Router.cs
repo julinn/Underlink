@@ -18,7 +18,7 @@ namespace Underlink
             ThisNodeID = new UInt128();
             ThisNode = new Node(ThisNodeID);
 
-            KnownNodes = new Bucket();
+            KnownNodes = new Bucket(ThisNode);
             KnownNodes.AddNode(ThisNode);
         }
     }

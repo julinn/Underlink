@@ -12,10 +12,70 @@ namespace Underlink
         private const int NodesPerBucket = 16;
 
         private Node[,] Nodes = new Node[NodeAddressLength, NodesPerBucket];
+        private Node ThisNode;
 
-        public void AddNode(Node NewNode)
+        public Bucket(Node ThisNode)
         {
-            return;
+            this.ThisNode = ThisNode;
+        }
+
+        public int GetBucketID(Node CheckNode)
+        {
+            UInt128 Bitmask = new UInt128(0, 0);
+
+            for (int i = 0; i < NodeAddressLength; i ++)
+            {
+                if (i < 64)
+                    Bitmask.Small <<= 1;
+                else
+                    Bitmask.Big <<= 1;
+
+                if (ThisNode.Address.MaskEquals(Bitmask, CheckNode.Address, Bitmask))
+                    return NodeAddressLength - 1 - i;
+            }
+
+            return NodeAddressLength - 1;
+        }
+
+        public int AddNode(Node NewNode)
+        {
+            int BucketID = GetBucketID(NewNode);
+
+            System.Console.WriteLine("In bucket " + BucketID);
+
+            for (int n = 0; n < NodesPerBucket; n ++)
+            {
+                if (ThisNode == NewNode)
+                    return BucketID;
+            }
+
+            for (int n = 0; n < NodesPerBucket; n ++)
+            {
+                System.Console.WriteLine("Bucket " + BucketID + " node " + n);
+
+                if (Nodes[BucketID, n] == null)
+                {
+                    Nodes[BucketID, n] = NewNode;
+
+                    System.Console.WriteLine("Added new node");
+                    return BucketID;
+                }
+            }
+
+            int MostDistant = 0;
+
+            for (int n = 0; n < NodesPerBucket; n++)
+            {
+                UInt128 Distance = Nodes[BucketID, n].GetDistance(NewNode);
+
+                if (Distance > Nodes[BucketID, MostDistant].Address)
+                    MostDistant = n;
+            }
+
+            Nodes[BucketID, MostDistant] = NewNode;
+
+            System.Console.WriteLine("Replaced node " + MostDistant);
+            return BucketID;
         }
 
         public void DeleteNode(Node DeleteNode)
@@ -23,8 +83,48 @@ namespace Underlink
             return;
         }
 
-        public Node GetClosestNode(Node SearchNode)
+        public Node GetClosestNode(Node SearchNode, int Steps)
         {
+            int StartBucket = GetBucketID(SearchNode);
+            if (StartBucket == 0 || SearchNode == ThisNode)
+                return ThisNode;
+
+            UInt128 LastDistance = new UInt128(0, 0);
+            Node ReturnNode = null;
+
+            for (int b = 0; b < NodeAddressLength; b ++)
+            {
+                Node[] SortedNodes = new Node[NodesPerBucket];
+                for (int k = 0; k < NodesPerBucket; k ++)
+                    SortedNodes[k] = Nodes[StartBucket, k];
+
+                Array.Sort(SortedNodes,
+                    delegate(Node A, Node B)
+                    {
+                        UInt128 DistFromA = ThisNode.GetDistance(A);
+                        UInt128 DistFromB = ThisNode.GetDistance(B);
+
+                        if (DistFromA < DistFromB) return 1;
+                        if (DistFromA > DistFromB) return -1;
+                        return 0;
+                    });
+
+                for (int n = Steps; n < NodesPerBucket; n ++)
+                {
+                    if (SortedNodes[n] == null)
+                        continue;
+
+                    if (SortedNodes[n] == SearchNode)
+                        return SortedNodes[n];
+
+                    if (SortedNodes[n].GetDistance(SearchNode) < LastDistance)
+                    {
+                        ReturnNode = SortedNodes[n];
+                        LastDistance = SortedNodes[n].GetDistance(SearchNode);
+                    }
+                }
+            }
+
             return SearchNode;
         }
     }

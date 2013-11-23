@@ -17,10 +17,16 @@ namespace Underlink
             this.Small = Small;
         }
 
-        public override bool Equals(UInt128 Obj)
+        public override bool Equals(object Obj)
         {
- 	        return Obj.Big == this.Big &&
-                   Obj.Small == this.Small;
+ 	        return ((UInt128) Obj).Big == this.Big &&
+                   ((UInt128) Obj).Small == this.Small;
+        }
+
+        public bool MaskEquals(UInt128 ThisMask, UInt128 Obj, UInt128 ObjMask)
+        {
+            return (this.Small & ThisMask.Small) == (Obj.Small & ObjMask.Small) &&
+                   (this.Big & ThisMask.Big) == (Obj.Big & ObjMask.Small);
         }
 
         public static bool operator ==(UInt128 Left, UInt128 Right)
@@ -78,6 +84,11 @@ namespace Underlink
         public static UInt128 operator ^(UInt128 Left, UInt128 Right)
         {
             return Left.Xor(Right);
+        }
+
+        public bool IsZero()
+        {
+            return this.Big == 0 && this.Small == 0;
         }
     }
 }

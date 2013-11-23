@@ -13,12 +13,12 @@ namespace Underlink
 
         }
 
-        public byte[] Write(byte[] Buffer)
+        public override byte[] Write(byte[] Buffer)
         {
             return Buffer;
         }
 
-        public byte[] Read()
+        public override byte[] Read()
         {
             return new byte[1];
         }

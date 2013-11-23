@@ -11,6 +11,8 @@ namespace Underlink
         static void Main(string[] args)
         {
             Router RouterInstance = new Router();
+
+            Console.ReadLine();
         }
     }
 }
