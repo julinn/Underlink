@@ -23,6 +23,11 @@ namespace Underlink
                    ((UInt128) Obj).Small == this.Small;
         }
 
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
         public bool MaskEquals(UInt128 ThisMask, UInt128 Obj, UInt128 ObjMask)
         {
             return (this.Small & ThisMask.Small) == (Obj.Small & ObjMask.Small) &&

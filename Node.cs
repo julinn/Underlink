@@ -20,6 +20,11 @@ namespace Underlink
             return this.Address == ((Node) Obj).Address;
         }
 
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
         public static bool operator ==(Node Left, Node Right)
         {
             if ((object) Left == null || (object) Right == null)

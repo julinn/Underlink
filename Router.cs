@@ -11,7 +11,7 @@ namespace Underlink
         UInt128 ThisNodeID;
         Node ThisNode;
         Bucket KnownNodes;
-        LocalEndpoint Endpoint;
+       // LocalEndpoint Endpoint;
 
         public Router()
         {
