@@ -6,9 +6,18 @@ using System.Threading.Tasks;
 
 namespace Underlink
 {
-    abstract class LocalEndpoint
+    public abstract class LocalEndpoint
     {
-        public abstract byte[] Write(byte[] Buffer);
-        public abstract byte[] Read();
+        public abstract void Write(byte[] buffer, int offset, int count);
+        public abstract int Read(byte[] buffer, int offset, int count);
+        public abstract void Close();
+
+        public abstract bool CanRead { get; }
+        public abstract bool CanSeek { get; }
+        public abstract bool CanTimeout { get; }
+        public abstract bool CanWrite { get; }
+
+        public abstract int ReadTimeout { get; set; }
+        public abstract int WriteTimeout { get; set; }
     }
 }

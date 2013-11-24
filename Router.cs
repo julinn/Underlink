@@ -26,7 +26,7 @@ namespace Underlink
             KnownNodes = new Bucket(ThisNode);
             KnownNodes.AddNode(ThisNode);
 
-            Adapter = new LocalEndpointTunTap();
+           // Adapter = new LocalEndpointTunTap();
             Socket = new NetworkEndpointUDP(3090);
 
             for (int i = 0; i < 2000; i ++)
