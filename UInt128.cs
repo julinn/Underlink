@@ -13,8 +13,11 @@ namespace Underlink
 
         public UInt128(UInt64 Big, UInt64 Small)
         {
-            this.Big = Big;
-            this.Small = Small;
+           // this.Big = Big;
+           // this.Small = Small;
+
+            this.Big = (ulong) System.Net.IPAddress.HostToNetworkOrder((long) Big);
+            this.Small = (ulong) System.Net.IPAddress.HostToNetworkOrder((long) Small);
         }
 
         public override bool Equals(object Obj)
@@ -31,15 +34,14 @@ namespace Underlink
         public bool MaskEquals(UInt128 Obj, UInt128 Mask)
         {
             /*
-            System.Console.WriteLine(Convert.ToString((long) (Obj.Big & ObjMask.Big), 2).PadLeft(8, '0'));
-            System.Console.WriteLine(Convert.ToString((long) (this.Big & ThisMask.Big), 2).PadLeft(8, '0'));
-            System.Console.WriteLine(Convert.ToString((long) (Obj.Small & ObjMask.Small), 2).PadLeft(8, '0'));
-            System.Console.WriteLine(Convert.ToString((long) (this.Small & ThisMask.Small), 2).PadLeft(8, '0'));
-            System.Console.WriteLine();
-             */
+            System.Console.WriteLine(Convert.ToString((long)(Obj.Big & Mask.Big), 2).PadLeft(64, '0'));
+            System.Console.WriteLine(Convert.ToString((long)(this.Big & Mask.Big), 2).PadLeft(64, '0'));
+            System.Console.WriteLine(Convert.ToString((long)(Obj.Small & Mask.Small), 2).PadLeft(64, '0'));
+            System.Console.WriteLine(Convert.ToString((long)(this.Small & Mask.Small), 2).PadLeft(64, '0'));
+            */
 
             return (this.Small & Mask.Small) == (Obj.Small & Mask.Small) &&
-                   (this.Big & Mask.Big) == (Obj.Big & Mask.Small);
+                   (this.Big & Mask.Big) == (Obj.Big & Mask.Big);
         }
 
         public static bool operator ==(UInt128 Left, UInt128 Right)

@@ -32,7 +32,6 @@ namespace Underlink
             for (int i = 0; i < 2000; i ++)
             {
                 Node TestNode = new Node(GenerateNodeID(), null);
-                // System.Console.WriteLine("New node created: " + TestNode.Address.ToHexString());
                 KnownNodes.AddNode(TestNode);
             }
 
