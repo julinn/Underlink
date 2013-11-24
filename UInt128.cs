@@ -95,5 +95,11 @@ namespace Underlink
         {
             return this.Big == 0 && this.Small == 0;
         }
+
+        public String ToHexString()
+        {
+            return String.Format("{0:X4}", System.Net.IPAddress.NetworkToHostOrder((long) this.Big)) + 
+                   String.Format("{0:X4}", System.Net.IPAddress.NetworkToHostOrder((long) this.Small));
+        }
     }
 }

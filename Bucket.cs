@@ -43,11 +43,15 @@ namespace Underlink
 
             System.Console.WriteLine("In bucket " + BucketID);
 
+            // First scan for the current node
+
             for (int n = 0; n < NodesPerBucket; n ++)
             {
                 if (ThisNode == NewNode)
                     return BucketID;
             }
+
+            // Then scan for empty slots in the bucket
 
             for (int n = 0; n < NodesPerBucket; n ++)
             {
@@ -61,6 +65,9 @@ namespace Underlink
                     return BucketID;
                 }
             }
+
+            // Finally, if there's no empty slots, overwrite the
+            // most distant node with the new one
 
             int MostDistant = 0;
 
@@ -90,7 +97,7 @@ namespace Underlink
                 return ThisNode;
 
             UInt128 LastDistance = new UInt128(0, 0);
-            Node ReturnNode = null;
+            Node ReturnNode = new Node();
 
             for (int b = 0; b < NodeAddressLength; b ++)
             {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,13 +7,15 @@ using System.Threading.Tasks;
 
 namespace Underlink
 {
-    class Node
+    struct Node
     {
         public UInt128 Address;
+        public IPEndPoint Endpoint;
 
-        public Node(UInt128 Address)
+        public Node(UInt128 Address, IPEndPoint Endpoint)
         {
             this.Address = Address;
+            this.Endpoint = Endpoint;
         }
 
         public override bool Equals(object Obj)
