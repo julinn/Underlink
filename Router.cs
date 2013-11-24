@@ -28,6 +28,12 @@ namespace Underlink
 
             Adapter = new LocalEndpointTunTap();
             Socket = new NetworkEndpointUDP(3090);
+
+            for (int i = 0; i < 32; i ++)
+            {
+                Node TestNode = new Node(GenerateNodeID(), null);
+                KnownNodes.AddNode(TestNode);
+            }
         }
 
         public UInt128 GenerateNodeID()

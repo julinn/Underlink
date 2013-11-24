@@ -30,6 +30,11 @@ namespace Underlink
 
         public bool MaskEquals(UInt128 ThisMask, UInt128 Obj, UInt128 ObjMask)
         {
+            System.Console.WriteLine(Convert.ToString((long) this.Big, 2).PadLeft(8, '0'));
+            System.Console.WriteLine(Convert.ToString((long) ThisMask.Big, 2).PadLeft(8, '0'));
+            System.Console.WriteLine(Convert.ToString((long) this.Small, 2).PadLeft(8, '0'));
+            System.Console.WriteLine(Convert.ToString((long) ThisMask.Small, 2).PadLeft(8, '0'));
+
             return (this.Small & ThisMask.Small) == (Obj.Small & ObjMask.Small) &&
                    (this.Big & ThisMask.Big) == (Obj.Big & ObjMask.Small);
         }

@@ -30,8 +30,11 @@ namespace Underlink
                 else
                     Bitmask.Big <<= 1;
 
-                if (ThisNode.Address.MaskEquals(Bitmask, CheckNode.Address, Bitmask))
-                    return NodeAddressLength - 1 - i;
+                System.Console.WriteLine(i + " -> " + Convert.ToString((long) Bitmask.Big, 2).PadLeft(8, '0'));
+                System.Console.WriteLine(i + " -> " + Convert.ToString((long) Bitmask.Small, 2).PadLeft(8, '0'));
+
+              //  if (ThisNode.Address.MaskEquals(Bitmask, CheckNode.Address, Bitmask))
+              //      return NodeAddressLength - 1 - i;
             }
 
             return NodeAddressLength - 1;
