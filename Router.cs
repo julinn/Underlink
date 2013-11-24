@@ -29,11 +29,14 @@ namespace Underlink
             Adapter = new LocalEndpointTunTap();
             Socket = new NetworkEndpointUDP(3090);
 
-            for (int i = 0; i < 323; i ++)
+            for (int i = 0; i < 2000; i ++)
             {
                 Node TestNode = new Node(GenerateNodeID(), null);
+                // System.Console.WriteLine("New node created: " + TestNode.Address.ToHexString());
                 KnownNodes.AddNode(TestNode);
             }
+
+            KnownNodes.PrintBucketSummary();
         }
 
         public UInt128 GenerateNodeID()
@@ -43,7 +46,7 @@ namespace Underlink
             byte[] BigBuffer = new byte[sizeof(Int64)];
             byte[] SmallBuffer = new byte[sizeof(Int64)];
 
-            Random RandomGenerator = new Random();
+            Random RandomGenerator = new Random(Guid.NewGuid().GetHashCode());
 
             RandomGenerator.NextBytes(BigBuffer);
             RandomGenerator.NextBytes(SmallBuffer);

@@ -28,10 +28,18 @@ namespace Underlink
             return base.GetHashCode();
         }
 
-        public bool MaskEquals(UInt128 ThisMask, UInt128 Obj, UInt128 ObjMask)
+        public bool MaskEquals(UInt128 Obj, UInt128 Mask)
         {
-            return (this.Small & ThisMask.Small) == (Obj.Small & ObjMask.Small) &&
-                   (this.Big & ThisMask.Big) == (Obj.Big & ObjMask.Small);
+            /*
+            System.Console.WriteLine(Convert.ToString((long) (Obj.Big & ObjMask.Big), 2).PadLeft(8, '0'));
+            System.Console.WriteLine(Convert.ToString((long) (this.Big & ThisMask.Big), 2).PadLeft(8, '0'));
+            System.Console.WriteLine(Convert.ToString((long) (Obj.Small & ObjMask.Small), 2).PadLeft(8, '0'));
+            System.Console.WriteLine(Convert.ToString((long) (this.Small & ThisMask.Small), 2).PadLeft(8, '0'));
+            System.Console.WriteLine();
+             */
+
+            return (this.Small & Mask.Small) == (Obj.Small & Mask.Small) &&
+                   (this.Big & Mask.Big) == (Obj.Big & Mask.Small);
         }
 
         public static bool operator ==(UInt128 Left, UInt128 Right)

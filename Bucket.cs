@@ -8,10 +8,10 @@ namespace Underlink
 {
     class Bucket
     {
-        private const int NodeAddressLength = 128;
-        private const int NodesPerBucket = 16;
+        public const int NodeAddressLength = 128;
+        public const int NodesPerBucket = 16;
 
-        private Node[,] Nodes = new Node[NodeAddressLength, NodesPerBucket];
+        public Node[,] Nodes = new Node[NodeAddressLength, NodesPerBucket];
         private Node ThisNode;
 
         public Bucket(Node ThisNode)
@@ -23,6 +23,9 @@ namespace Underlink
         {
             UInt128 Bitmask = new UInt128(UInt64.MaxValue, UInt64.MaxValue);
 
+            CheckNode.Address.Big = (ulong) System.Net.IPAddress.NetworkToHostOrder((long) CheckNode.Address.Big);
+            CheckNode.Address.Small = (ulong) System.Net.IPAddress.NetworkToHostOrder((long) CheckNode.Address.Small);
+
             for (int i = 0; i < NodeAddressLength; i ++)
             {
                 if (i < 64)
@@ -30,11 +33,12 @@ namespace Underlink
                 else
                     Bitmask.Big <<= 1;
 
-                if (ThisNode.Address.MaskEquals(Bitmask, CheckNode.Address, Bitmask))
-                    return NodeAddressLength - 1 - i;
+                if (ThisNode.Address.MaskEquals(CheckNode.Address, Bitmask))
+                    return NodeAddressLength - i;
             }
 
-            return NodeAddressLength - 1;
+            //throw new Exception("THIS SHOULD NOT EVER HAPPEN");
+            return NodeAddressLength;
         }
 
         public int AddNode(Node NewNode)
@@ -57,7 +61,7 @@ namespace Underlink
                 {
                     Nodes[BucketID, n] = NewNode;
 
-                    System.Console.WriteLine("Bucket " + BucketID + ": Added new node " + n);
+                    System.Console.WriteLine("Bucket " + (BucketID + 1) + ": Added new node " + n);
                     return BucketID;
                 }
             }
@@ -78,7 +82,7 @@ namespace Underlink
 
             Nodes[BucketID, MostDistant] = NewNode;
 
-            System.Console.WriteLine("Bucket " + BucketID + ": Replaced existing node " + MostDistant);
+            System.Console.WriteLine("Bucket " + (BucketID + 1) + ": Replaced existing node " + MostDistant);
             return BucketID;
         }
 
@@ -130,6 +134,33 @@ namespace Underlink
             }
 
             return SearchNode;
+        }
+
+        public void PrintBucketSummary()
+        {
+            for (int b = 0; b < NodeAddressLength; b++)
+            {
+                int count = 0;
+
+                for (int n = 0; n < NodesPerBucket; n++)
+                {
+                    if (!Nodes[b, n].Address.IsZero())
+                        count++;
+                }
+
+                if (count == NodesPerBucket)
+                    System.Console.ForegroundColor = ConsoleColor.Yellow;
+                else if (count > 0)
+                    System.Console.ForegroundColor = ConsoleColor.Green;
+                else
+                    System.Console.ForegroundColor = ConsoleColor.Red;
+
+                System.Console.Write((b + 1).ToString("D3") + ": " + count + "\t");
+                if (b % 8 == 7)
+                    System.Console.WriteLine();
+            }
+
+            System.Console.ForegroundColor = ConsoleColor.Gray;
         }
     }
 }
