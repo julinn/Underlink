@@ -21,7 +21,7 @@ namespace Underlink
 
         public int GetBucketID(Node CheckNode)
         {
-            UInt128 Bitmask = new UInt128(0, 0);
+            UInt128 Bitmask = new UInt128(UInt64.MaxValue, UInt64.MaxValue);
 
             for (int i = 0; i < NodeAddressLength; i ++)
             {
@@ -30,11 +30,8 @@ namespace Underlink
                 else
                     Bitmask.Big <<= 1;
 
-                System.Console.WriteLine(i + " -> " + Convert.ToString((long) Bitmask.Big, 2).PadLeft(8, '0'));
-                System.Console.WriteLine(i + " -> " + Convert.ToString((long) Bitmask.Small, 2).PadLeft(8, '0'));
-
-              //  if (ThisNode.Address.MaskEquals(Bitmask, CheckNode.Address, Bitmask))
-              //      return NodeAddressLength - 1 - i;
+                if (ThisNode.Address.MaskEquals(Bitmask, CheckNode.Address, Bitmask))
+                    return NodeAddressLength - 1 - i;
             }
 
             return NodeAddressLength - 1;
@@ -43,8 +40,6 @@ namespace Underlink
         public int AddNode(Node NewNode)
         {
             int BucketID = GetBucketID(NewNode);
-
-            System.Console.WriteLine("In bucket " + BucketID);
 
             // First scan for the current node
 
@@ -58,13 +53,11 @@ namespace Underlink
 
             for (int n = 0; n < NodesPerBucket; n ++)
             {
-                System.Console.WriteLine("Bucket " + BucketID + " node " + n);
-
-                if (Nodes[BucketID, n] == null)
+                if (Nodes[BucketID, n].Address.IsZero())
                 {
                     Nodes[BucketID, n] = NewNode;
 
-                    System.Console.WriteLine("Added new node");
+                    System.Console.WriteLine("Bucket " + BucketID + ": Added new node " + n);
                     return BucketID;
                 }
             }
@@ -76,7 +69,8 @@ namespace Underlink
 
             for (int n = 0; n < NodesPerBucket; n++)
             {
-                UInt128 Distance = Nodes[BucketID, n].GetDistance(NewNode);
+                // UInt128 Distance = Nodes[BucketID, n].GetDistance(NewNode);
+                UInt128 Distance = ThisNode.GetDistance(NewNode);
 
                 if (Distance > Nodes[BucketID, MostDistant].Address)
                     MostDistant = n;
@@ -84,7 +78,7 @@ namespace Underlink
 
             Nodes[BucketID, MostDistant] = NewNode;
 
-            System.Console.WriteLine("Replaced node " + MostDistant);
+            System.Console.WriteLine("Bucket " + BucketID + ": Replaced existing node " + MostDistant);
             return BucketID;
         }
 
