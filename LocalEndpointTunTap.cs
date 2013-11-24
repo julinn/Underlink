@@ -11,139 +11,139 @@ using System.Net;
 
 namespace Underlink
 {
-	public class NetworkAdapterWin
+    public class NetworkAdapterWin
     {
-		public static IList<NetworkAdapterWin> GetAdapters()
+        public static IList<NetworkAdapterWin> GetAdapters()
         {
-			const string AdapterKey = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}";
-			RegistryKey regAdapters = Registry.LocalMachine.OpenSubKey(AdapterKey, true);
+            const string AdapterKey = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}";
+            RegistryKey regAdapters = Registry.LocalMachine.OpenSubKey(AdapterKey, true);
 
-			List<NetworkAdapterWin> adapters = new List<NetworkAdapterWin>();
+            List<NetworkAdapterWin> adapters = new List<NetworkAdapterWin>();
 
-			foreach (System.Net.NetworkInformation.NetworkInterface ni in
+            foreach (System.Net.NetworkInformation.NetworkInterface ni in
                      System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
             {
-				Console.WriteLine("X={0}", ni.Description);
-				Console.WriteLine("X={0}", ni.GetPhysicalAddress());
-				Console.WriteLine("X={0}", ni.Id);
-				Console.WriteLine("X={0}", ni.IsReceiveOnly);
-				Console.WriteLine("X={0}", ni.Name);
-				Console.WriteLine("X={0}", ni.NetworkInterfaceType);
-				Console.WriteLine("X={0}", ni.OperationalStatus);
-				Console.WriteLine("X={0}", ni.Speed);
-			}
+                Console.WriteLine("X={0}", ni.Description);
+                Console.WriteLine("X={0}", ni.GetPhysicalAddress());
+                Console.WriteLine("X={0}", ni.Id);
+                Console.WriteLine("X={0}", ni.IsReceiveOnly);
+                Console.WriteLine("X={0}", ni.Name);
+                Console.WriteLine("X={0}", ni.NetworkInterfaceType);
+                Console.WriteLine("X={0}", ni.OperationalStatus);
+                Console.WriteLine("X={0}", ni.Speed);
+            }
 
-			foreach (string x in regAdapters.GetSubKeyNames())
+            foreach (string x in regAdapters.GetSubKeyNames())
             {
-				RegistryKey regAdapter = regAdapters.OpenSubKey(x);
-				object id = regAdapter.GetValue("ComponentId");
+                RegistryKey regAdapter = regAdapters.OpenSubKey(x);
+                object id = regAdapter.GetValue("ComponentId");
 
-				if (id != null && (id.ToString().StartsWith("tap0801") ||
+                if (id != null && (id.ToString().StartsWith("tap0801") ||
                     id.ToString().StartsWith("tap0901")))
                 {
-					string devGuid = regAdapter.GetValue("NetCfgInstanceId").ToString();
+                    string devGuid = regAdapter.GetValue("NetCfgInstanceId").ToString();
 
-					foreach (String n in regAdapter.GetValueNames()) 
-                       Console.WriteLine(n + "=" + regAdapter.GetValue(n).ToString());
+                    foreach (String n in regAdapter.GetValueNames())
+                        Console.WriteLine(n + "=" + regAdapter.GetValue(n).ToString());
 
-					adapters.Add(new NetworkAdapterWin(devGuid));
-				}
-			}
+                    adapters.Add(new NetworkAdapterWin(devGuid));
+                }
+            }
 
-			return adapters;
-		}
+            return adapters;
+        }
 
-		public string DeviceGuid { get; private set; }
+        public string DeviceGuid { get; private set; }
 
-		private NetworkAdapterWin(string guid)
+        private NetworkAdapterWin(string guid)
         {
-			DeviceGuid = guid;
-		}
+            DeviceGuid = guid;
+        }
 
-		public string Name
+        public string Name
         {
-			get
+            get
             {
-				const string ConnectionKey = "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}";
-				RegistryKey regConnection = Registry.LocalMachine.OpenSubKey(ConnectionKey + "\\" + DeviceGuid + "\\Connection", true);
-				object id = regConnection.GetValue("Name");
+                const string ConnectionKey = "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}";
+                RegistryKey regConnection = Registry.LocalMachine.OpenSubKey(ConnectionKey + "\\" + DeviceGuid + "\\Connection", true);
+                object id = regConnection.GetValue("Name");
 
-				if (id != null)
+                if (id != null)
                     return id.ToString();
-				return "";
-			}
-		}
+                return "";
+            }
+        }
 
-		public LocalEndpointTunTap Open()
+        public LocalEndpointTunTap Open()
         {
-			return new LocalEndpointTunTap(DeviceGuid);
-		}
-	}
+            return new LocalEndpointTunTap(DeviceGuid);
+        }
+    }
 
-	public class LocalEndpointTunTap : LocalEndpoint
+    public class LocalEndpointTunTap : LocalEndpoint
     {
-		private const string UsermodeDeviceSpace = "\\\\.\\Global\\";
+        private const string UsermodeDeviceSpace = "\\\\.\\Global\\";
 
-		enum IoControlCodes : uint
+        enum IoControlCodes : uint
         {
-			METHOD_BUFFERED = 0,
-			FILE_ANY_ACCESS = 0,
-			FILE_DEVICE_UNKNOWN = 0x00000022,
-			TAP_CONTROL_CODE = (FILE_DEVICE_UNKNOWN << 16) | (FILE_ANY_ACCESS << 14) | METHOD_BUFFERED,
+            METHOD_BUFFERED = 0,
+            FILE_ANY_ACCESS = 0,
+            FILE_DEVICE_UNKNOWN = 0x00000022,
+            TAP_CONTROL_CODE = (FILE_DEVICE_UNKNOWN << 16) | (FILE_ANY_ACCESS << 14) | METHOD_BUFFERED,
 
-			GET_MAC = TAP_CONTROL_CODE | (1 << 2),
-			GET_VERSION = TAP_CONTROL_CODE | (2 << 2),
-			GET_MTU = TAP_CONTROL_CODE | (3 << 2),
-			GET_INFO = TAP_CONTROL_CODE | (4 << 2),
-			CONFIG_POINT_TO_POINT = TAP_CONTROL_CODE | (5 << 2),
-			SET_MEDIA_STATUS = TAP_CONTROL_CODE | (6 << 2),
-			CONFIG_DHCP_MASQ = TAP_CONTROL_CODE | (7 << 2),
-			GET_LOG_LINE = TAP_CONTROL_CODE | (8 << 2),
-			CONFIG_DHCP_SET_OPT = TAP_CONTROL_CODE | (9 << 2),
-			CONFIG_TUN = TAP_CONTROL_CODE | (10 << 2)
-		}
+            GET_MAC = TAP_CONTROL_CODE | (1 << 2),
+            GET_VERSION = TAP_CONTROL_CODE | (2 << 2),
+            GET_MTU = TAP_CONTROL_CODE | (3 << 2),
+            GET_INFO = TAP_CONTROL_CODE | (4 << 2),
+            CONFIG_POINT_TO_POINT = TAP_CONTROL_CODE | (5 << 2),
+            SET_MEDIA_STATUS = TAP_CONTROL_CODE | (6 << 2),
+            CONFIG_DHCP_MASQ = TAP_CONTROL_CODE | (7 << 2),
+            GET_LOG_LINE = TAP_CONTROL_CODE | (8 << 2),
+            CONFIG_DHCP_SET_OPT = TAP_CONTROL_CODE | (9 << 2),
+            CONFIG_TUN = TAP_CONTROL_CODE | (10 << 2)
+        }
 
-		const int FILE_ATTRIBUTE_SYSTEM = 0x4;
-		const int FILE_FLAG_OVERLAPPED = 0x40000000;
+        const int FILE_ATTRIBUTE_SYSTEM = 0x4;
+        const int FILE_FLAG_OVERLAPPED = 0x40000000;
 
-		[DllImport("Kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-		static extern IntPtr CreateFile(
-			string filename,
-			[MarshalAs(UnmanagedType.U4)]FileAccess fileaccess,
-			[MarshalAs(UnmanagedType.U4)]FileShare fileshare,
-			int securityattributes,
-			[MarshalAs(UnmanagedType.U4)]FileMode creationdisposition,
-			int flags,
-			IntPtr template);
+        [DllImport("Kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern IntPtr CreateFile(
+            string filename,
+            [MarshalAs(UnmanagedType.U4)]FileAccess fileaccess,
+            [MarshalAs(UnmanagedType.U4)]FileShare fileshare,
+            int securityattributes,
+            [MarshalAs(UnmanagedType.U4)]FileMode creationdisposition,
+            int flags,
+            IntPtr template);
 
-		[DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true, CharSet = CharSet.Auto)]
-		static extern bool DeviceIoControl(IntPtr hDevice, IoControlCodes dwIoControlCode,
-			IntPtr lpInBuffer, uint nInBufferSize,
-			IntPtr lpOutBuffer, uint nOutBufferSize,
-			out int lpBytesReturned, IntPtr lpOverlapped);
+        [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true, CharSet = CharSet.Auto)]
+        static extern bool DeviceIoControl(IntPtr hDevice, IoControlCodes dwIoControlCode,
+            IntPtr lpInBuffer, uint nInBufferSize,
+            IntPtr lpOutBuffer, uint nOutBufferSize,
+            out int lpBytesReturned, IntPtr lpOverlapped);
 
-		IntPtr _devPtr;
-		FileStream _devStream;
+        IntPtr _devPtr;
+        FileStream _devStream;
 
-		public LocalEndpointTunTap(string guid)
+        public LocalEndpointTunTap(string guid)
         {
-			_devPtr = CreateFile(UsermodeDeviceSpace + guid + ".tap", FileAccess.ReadWrite,
-				FileShare.ReadWrite, 0, FileMode.Open, FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, IntPtr.Zero);
+            _devPtr = CreateFile(UsermodeDeviceSpace + guid + ".tap", FileAccess.ReadWrite,
+                FileShare.ReadWrite, 0, FileMode.Open, FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED, IntPtr.Zero);
 
-			SetStatus(true);
+            SetStatus(true);
 
-			SafeFileHandle safeHandle = new SafeFileHandle(_devPtr, true);
-			_devStream = new FileStream(safeHandle, FileAccess.ReadWrite, 10000, true);
-		}
+            SafeFileHandle safeHandle = new SafeFileHandle(_devPtr, true);
+            _devStream = new FileStream(safeHandle, FileAccess.ReadWrite, 10000, true);
+        }
 
-		public void SetStatus(bool online)
+        public void SetStatus(bool online)
         {
-			int dummy;
-			IntPtr pstatus = Marshal.AllocHGlobal(4);
-			Marshal.WriteInt32(pstatus, online ? 1 : 0);
-			DeviceIoControl(_devPtr, IoControlCodes.SET_MEDIA_STATUS, pstatus, 4, pstatus, 4, out dummy, IntPtr.Zero);
-			Marshal.FreeHGlobal(pstatus);
-		}
+            int dummy;
+            IntPtr pstatus = Marshal.AllocHGlobal(4);
+            Marshal.WriteInt32(pstatus, online ? 1 : 0);
+            DeviceIoControl(_devPtr, IoControlCodes.SET_MEDIA_STATUS, pstatus, 4, pstatus, 4, out dummy, IntPtr.Zero);
+            Marshal.FreeHGlobal(pstatus);
+        }
 
         /*
 		public void SetTunMode(IP4Address localIP, IP4Address remoteNetwork, IP4Address networkMask)
@@ -170,44 +170,44 @@ namespace Underlink
 		}
          */
 
-		public override int Read(byte[] buffer, int offset, int count)
+        public override int Read(byte[] buffer, int offset, int count)
         {
-			return _devStream.Read(buffer, offset, count);
-		}
+            return _devStream.Read(buffer, offset, count);
+        }
 
-		public override void Write(byte[] buffer, int offset, int count)
+        public override void Write(byte[] buffer, int offset, int count)
         {
-			_devStream.Write(buffer, offset, count);
-			_devStream.Flush();
-		}
+            _devStream.Write(buffer, offset, count);
+            _devStream.Flush();
+        }
 
-		public void Write(Message packet)
+        public void Write(Message packet)
         {
-			// packet.WriteTo(_devStream);
-			_devStream.Flush();
-		}
+            // packet.WriteTo(_devStream);
+            _devStream.Flush();
+        }
 
-		public override void Close()
+        public override void Close()
         {
-			_devStream.Close();
-			// base.Close();
-		}
+            _devStream.Close();
+            // base.Close();
+        }
 
-		public override bool CanRead { get { return _devStream.CanRead; } }
-		public override bool CanSeek { get { return false; } }
-		public override bool CanTimeout { get { return _devStream.CanTimeout; } }
-		public override bool CanWrite { get { return _devStream.CanWrite; } }
+        public override bool CanRead { get { return _devStream.CanRead; } }
+        public override bool CanSeek { get { return false; } }
+        public override bool CanTimeout { get { return _devStream.CanTimeout; } }
+        public override bool CanWrite { get { return _devStream.CanWrite; } }
 
-		public override int ReadTimeout
+        public override int ReadTimeout
         {
-			get { return _devStream.ReadTimeout; }
-			set { _devStream.ReadTimeout = value; }
-		}
+            get { return _devStream.ReadTimeout; }
+            set { _devStream.ReadTimeout = value; }
+        }
 
-		public override int WriteTimeout
+        public override int WriteTimeout
         {
-			get { return _devStream.WriteTimeout; }
-			set { _devStream.WriteTimeout = value; }
-		}
-	}
+            get { return _devStream.WriteTimeout; }
+            set { _devStream.WriteTimeout = value; }
+        }
+    }
 }
