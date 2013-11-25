@@ -23,9 +23,6 @@ namespace Underlink
         {
             UInt128 Bitmask = new UInt128(UInt64.MaxValue, UInt64.MaxValue);
 
-           // CheckNode.Address.Big = (ulong) System.Net.IPAddress.NetworkToHostOrder((long) CheckNode.Address.Big);
-           // CheckNode.Address.Small = (ulong) System.Net.IPAddress.NetworkToHostOrder((long) CheckNode.Address.Small);
-
             for (int i = 0; i < NodeAddressLength; i ++)
             {
                 if (i < 64)
@@ -33,20 +30,8 @@ namespace Underlink
                 else
                     Bitmask.Big <<= 1;
 
-                if (ThisNode.Address.MaskEquals(CheckNode.Address, Bitmask))
-                {
-                   // System.Console.ForegroundColor = ConsoleColor.Green;
-                   // System.Console.WriteLine("MATCH FOUND");
-                   // System.Console.ForegroundColor = ConsoleColor.Gray;
-
+                if (ThisNode.Record.Address.MaskEquals(CheckNode.Record.Address, Bitmask))
                     return NodeAddressLength - i - 1;
-                }
-                    else
-                {
-                   // System.Console.ForegroundColor = ConsoleColor.Red;
-                   // System.Console.WriteLine("MATCH NOT FOUND");
-                   // System.Console.ForegroundColor = ConsoleColor.Gray;
-                }
             }
 
             return NodeAddressLength - 1;
@@ -68,7 +53,7 @@ namespace Underlink
 
             for (int n = 0; n < NodesPerBucket; n ++)
             {
-                if (Nodes[BucketID, n].Address.IsZero())
+                if (Nodes[BucketID, n].Record.Address.IsZero())
                 {
                     Nodes[BucketID, n] = NewNode;
 
@@ -87,7 +72,7 @@ namespace Underlink
                 // UInt128 Distance = Nodes[BucketID, n].GetDistance(NewNode);
                 UInt128 Distance = ThisNode.GetDistance(NewNode);
 
-                if (Distance > Nodes[BucketID, MostDistant].Address)
+                if (Distance > Nodes[BucketID, MostDistant].Record.Address)
                     MostDistant = n;
             }
 
@@ -144,7 +129,7 @@ namespace Underlink
                 }
             }
 
-            return SearchNode;
+            return ReturnNode;
         }
 
         public void PrintBucketSummary()
@@ -155,7 +140,7 @@ namespace Underlink
 
                 for (int n = 0; n < NodesPerBucket; n++)
                 {
-                    if (!Nodes[b, n].Address.IsZero())
+                    if (!Nodes[b, n].Record.Address.IsZero())
                         count++;
                 }
 

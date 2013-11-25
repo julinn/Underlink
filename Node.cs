@@ -7,20 +7,28 @@ using System.Threading.Tasks;
 
 namespace Underlink
 {
-    struct Node
+    public struct NodeRecord
     {
         public UInt128 Address;
         public IPEndPoint Endpoint;
+    }
+
+    struct Node
+    {
+        public NodeRecord Record;
+        public UInt32 LastCommunication;
 
         public Node(UInt128 Address, IPEndPoint Endpoint)
         {
-            this.Address = Address;
-            this.Endpoint = Endpoint;
+            this.Record.Address = Address;
+            this.Record.Endpoint = Endpoint;
+
+            this.LastCommunication = 0;
         }
 
         public override bool Equals(object Obj)
         {
-            return this.Address == ((Node) Obj).Address;
+            return this.Record.Address == ((Node)Obj).Record.Address;
         }
 
         public override int GetHashCode()
@@ -30,12 +38,12 @@ namespace Underlink
 
         public static bool operator ==(Node Left, Node Right)
         {
-            if ((object) Left == null || (object) Right == null)
+            if ((object)Left == null || (object)Right == null)
             {
-                return (object) Left == (object) Right;
+                return (object)Left == (object)Right;
             }
 
-            return Left.Address == Right.Address;
+            return Left.Record.Address == Right.Record.Address;
         }
 
         public static bool operator !=(Node Left, Node Right)
@@ -45,12 +53,12 @@ namespace Underlink
                 return (object)Left != (object)Right;
             }
 
-            return Left.Address != Right.Address;
+            return Left.Record.Address != Right.Record.Address;
         }
 
         public UInt128 GetDistance(Node CompareNode)
         {
-            return this.Address.Xor(CompareNode.Address);
+            return this.Record.Address.Xor(CompareNode.Record.Address);
         }
     }
 }
