@@ -22,10 +22,11 @@ namespace Underlink
         public Router()
         {
             ThisNodeKeypair = GenerateNodeKeypair();
-            System.Console.WriteLine("This node ID: " + ThisNodeKeypair.PublicKey.ToHexString());
-            System.Console.WriteLine("Private key: " + ThisNodeKeypair.PrivateKey.ToHexString());
+            System.Console.WriteLine("Node ID: " + ThisNodeKeypair.Address.ToHexString());
+            System.Console.WriteLine("Private key: " + BitConverter.ToString(ThisNodeKeypair.PrivateKey).Replace("-", ""));
+            System.Console.WriteLine("Public key: " + BitConverter.ToString(ThisNodeKeypair.PublicKey).Replace("-", ""));
 
-            ThisNode = new Node(ThisNodeKeypair.PublicKey, null);
+            ThisNode = new Node(ThisNodeKeypair.Address, null);
 
             KnownNodes = new Bucket(ThisNode);
             KnownNodes.AddNode(ThisNode);
@@ -45,22 +46,21 @@ namespace Underlink
         public NodeKeypair GenerateNodeKeypair()
         {
             NodeKeypair ReturnNodeID = new NodeKeypair();
-            byte[] PublicKeyBuffer = new byte[curve25519xsalsa20poly1305.PUBLICKEYBYTES];
-            byte[] PrivateKeyBuffer = new byte[curve25519xsalsa20poly1305.SECRETKEYBYTES];
+            ReturnNodeID.PublicKey = new byte[curve25519xsalsa20poly1305.PUBLICKEYBYTES];
+            ReturnNodeID.PrivateKey = new byte[curve25519xsalsa20poly1305.SECRETKEYBYTES];
+            byte[] AddressBuffer = new byte[32];
 
-            Random RandomGenerator = new Random(Guid.NewGuid().GetHashCode());
+            RNGCryptoServiceProvider RandomGenerator = new RNGCryptoServiceProvider();
             SHA512 SHAGenerator = new SHA512Managed();
 
-            while (PublicKeyBuffer[0] != 0xFD)
+            while (ReturnNodeID.PublicKey[0] != 0xFD)
             {
-                RandomGenerator.NextBytes(PrivateKeyBuffer);
-                PublicKeyBuffer = SHAGenerator.ComputeHash(PrivateKeyBuffer);
-
-                curve25519xsalsa20poly1305.crypto_box_getpublickey(out PublicKeyBuffer, PrivateKeyBuffer);
+                RandomGenerator.GetBytes(ReturnNodeID.PrivateKey);
+                curve25519xsalsa20poly1305.crypto_box_getpublickey(out ReturnNodeID.PublicKey, ReturnNodeID.PrivateKey);
+                AddressBuffer = SHAGenerator.ComputeHash(ReturnNodeID.PublicKey);
             }
 
-            ReturnNodeID.PublicKey = new UInt128(PublicKeyBuffer);
-            ReturnNodeID.PrivateKey = new UInt128(PrivateKeyBuffer);
+            ReturnNodeID.Address = new UInt128(AddressBuffer);
 
             return ReturnNodeID;
         }
