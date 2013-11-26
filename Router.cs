@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using UCIS.NaCl;
+using UCIS.NaCl.crypto_box;
 
 namespace Underlink
 {
     class Router
     {
-        UInt128 ThisNodeID;
+        NodeKeypair ThisNodeKeypair;
         Node ThisNode;
 
         Bucket KnownNodes;
@@ -19,10 +21,11 @@ namespace Underlink
 
         public Router()
         {
-            ThisNodeID = GenerateNodeID();
-            System.Console.WriteLine("This node ID: " + ThisNodeID.ToHexString());
-            
-            ThisNode = new Node(ThisNodeID, null);
+            ThisNodeKeypair = GenerateNodeKeypair();
+            System.Console.WriteLine("This node ID: " + ThisNodeKeypair.PublicKey.ToHexString());
+            System.Console.WriteLine("Private key: " + ThisNodeKeypair.PrivateKey.ToHexString());
+
+            ThisNode = new Node(ThisNodeKeypair.PublicKey, null);
 
             KnownNodes = new Bucket(ThisNode);
             KnownNodes.AddNode(ThisNode);
@@ -30,36 +33,34 @@ namespace Underlink
            // Adapter = new LocalEndpointTunTap();
             Socket = new NetworkEndpointUDP(3090);
 
-            for (int i = 0; i < 2000; i ++)
+           /* for (int i = 0; i < 2000; i ++)
             {
                 Node TestNode = new Node(GenerateNodeID(), null);
                 KnownNodes.AddNode(TestNode);
-            }
+            } */
 
             KnownNodes.PrintBucketSummary();
         }
 
-        public UInt128 GenerateNodeID()
+        public NodeKeypair GenerateNodeKeypair()
         {
-            UInt128 ReturnNodeID;
-
-            byte[] BigBuffer = new byte[sizeof(Int64)];
-            byte[] SmallBuffer = new byte[sizeof(Int64)];
+            NodeKeypair ReturnNodeID = new NodeKeypair();
+            byte[] PublicKeyBuffer = new byte[curve25519xsalsa20poly1305.PUBLICKEYBYTES];
+            byte[] PrivateKeyBuffer = new byte[curve25519xsalsa20poly1305.SECRETKEYBYTES];
 
             Random RandomGenerator = new Random(Guid.NewGuid().GetHashCode());
             SHA512 SHAGenerator = new SHA512Managed();
 
-            while (BigBuffer[0] != 0xFD)
+            while (PublicKeyBuffer[0] != 0xFD)
             {
-                RandomGenerator.NextBytes(BigBuffer);
-                RandomGenerator.NextBytes(SmallBuffer);
+                RandomGenerator.NextBytes(PrivateKeyBuffer);
+                PublicKeyBuffer = SHAGenerator.ComputeHash(PrivateKeyBuffer);
 
-                BigBuffer = SHAGenerator.ComputeHash(BigBuffer);
-                SmallBuffer = SHAGenerator.ComputeHash(SmallBuffer);
+                curve25519xsalsa20poly1305.crypto_box_getpublickey(out PublicKeyBuffer, PrivateKeyBuffer);
             }
 
-            ReturnNodeID.Big = BitConverter.ToUInt64(BigBuffer, 0);
-            ReturnNodeID.Small = BitConverter.ToUInt64(SmallBuffer, 0);
+            ReturnNodeID.PublicKey = new UInt128(PublicKeyBuffer);
+            ReturnNodeID.PrivateKey = new UInt128(PrivateKeyBuffer);
 
             return ReturnNodeID;
         }

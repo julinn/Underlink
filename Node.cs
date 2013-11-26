@@ -3,7 +3,10 @@ using System.Net;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using UCIS.NaCl;
+using UCIS.NaCl.crypto_box;
 
 namespace Underlink
 {
@@ -11,6 +14,12 @@ namespace Underlink
     {
         public UInt128 Address;
         public IPEndPoint Endpoint;
+    }
+
+    public struct NodeKeypair
+    {
+        public UInt128 PrivateKey;
+        public UInt128 PublicKey;
     }
 
     struct Node
