@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 namespace Underlink
 {
@@ -46,10 +47,16 @@ namespace Underlink
             byte[] SmallBuffer = new byte[sizeof(Int64)];
 
             Random RandomGenerator = new Random(Guid.NewGuid().GetHashCode());
+            SHA512 SHAGenerator = new SHA512Managed();
 
-            RandomGenerator.NextBytes(BigBuffer);
-            RandomGenerator.NextBytes(SmallBuffer);
-            BigBuffer[0] = 0xFD;
+            while (BigBuffer[0] != 0xFD)
+            {
+                RandomGenerator.NextBytes(BigBuffer);
+                RandomGenerator.NextBytes(SmallBuffer);
+
+                BigBuffer = SHAGenerator.ComputeHash(BigBuffer);
+                SmallBuffer = SHAGenerator.ComputeHash(SmallBuffer);
+            }
 
             ReturnNodeID.Big = BitConverter.ToUInt64(BigBuffer, 0);
             ReturnNodeID.Small = BitConverter.ToUInt64(SmallBuffer, 0);
