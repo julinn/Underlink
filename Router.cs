@@ -50,20 +50,20 @@ namespace Underlink
             ReturnNodeID.PrivateKey = new byte[curve25519xsalsa20poly1305.SECRETKEYBYTES];
             byte[] AddressBuffer = new byte[32];
 
-            RNGCryptoServiceProvider RandomGenerator = new RNGCryptoServiceProvider();
-            SHA512 SHAGenerator = new SHA512Managed();
-
-            while (AddressBuffer[0] != 0xFD)
+            using (RNGCryptoServiceProvider RandomGenerator = new RNGCryptoServiceProvider())
             {
-                RandomGenerator.GetBytes(ReturnNodeID.PrivateKey);
-                curve25519xsalsa20poly1305.crypto_box_getpublickey(out ReturnNodeID.PublicKey, ReturnNodeID.PrivateKey);
-                AddressBuffer = SHAGenerator.ComputeHash(ReturnNodeID.PublicKey);
+                using (SHA512 SHAGenerator = new SHA512Managed())
+                {
+                    while (AddressBuffer[0] != 0xFD)
+                    {
+                        RandomGenerator.GetBytes(ReturnNodeID.PrivateKey);
+                        curve25519xsalsa20poly1305.crypto_box_getpublickey(out ReturnNodeID.PublicKey, ReturnNodeID.PrivateKey);
+                        AddressBuffer = SHAGenerator.ComputeHash(ReturnNodeID.PublicKey);
+                    }
+                }
             }
 
             ReturnNodeID.Address = new UInt128(AddressBuffer);
-
-            RandomGenerator.Dispose();
-            SHAGenerator.Dispose();
 
             return ReturnNodeID;
         }
