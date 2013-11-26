@@ -53,7 +53,7 @@ namespace Underlink
             RNGCryptoServiceProvider RandomGenerator = new RNGCryptoServiceProvider();
             SHA512 SHAGenerator = new SHA512Managed();
 
-            while (ReturnNodeID.PublicKey[0] != 0xFD)
+            while (AddressBuffer[0] != 0xFD)
             {
                 RandomGenerator.GetBytes(ReturnNodeID.PrivateKey);
                 curve25519xsalsa20poly1305.crypto_box_getpublickey(out ReturnNodeID.PublicKey, ReturnNodeID.PrivateKey);
@@ -61,6 +61,9 @@ namespace Underlink
             }
 
             ReturnNodeID.Address = new UInt128(AddressBuffer);
+
+            RandomGenerator.Dispose();
+            SHAGenerator.Dispose();
 
             return ReturnNodeID;
         }
