@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 using UCIS.NaCl;
@@ -11,36 +14,64 @@ namespace Underlink
 {
     class Router
     {
+        enum Status
+        {
+            KEYGEN,
+            BOOTSTRAP,
+            ISOLATED,
+            HEALTHY
+        };
+
         NodeKeypair ThisNodeKeypair;
         Node ThisNode;
 
         Bucket KnownNodes;
 
-        LocalEndpoint Adapter;
-        NetworkEndpoint Socket;
+        private Socket Sock;
+        private IPEndPoint Endpoint;
 
         public Router()
         {
             ThisNodeKeypair = GenerateNodeKeypair();
-            System.Console.WriteLine("Node ID: " + ThisNodeKeypair.Address.ToHexString());
-            System.Console.WriteLine("Private key: " + BitConverter.ToString(ThisNodeKeypair.PrivateKey).Replace("-", ""));
-            System.Console.WriteLine("Public key: " + BitConverter.ToString(ThisNodeKeypair.PublicKey).Replace("-", ""));
-
             ThisNode = new Node(ThisNodeKeypair.Address, null);
 
             KnownNodes = new Bucket(ThisNode);
             KnownNodes.AddNode(ThisNode);
 
-           // Adapter = new LocalEndpointTunTap();
-            Socket = new NetworkEndpointUDP(3090);
-
-           /* for (int i = 0; i < 2000; i ++)
-            {
-                Node TestNode = new Node(GenerateNodeID(), null);
-                KnownNodes.AddNode(TestNode);
-            } */
-
+            System.Console.WriteLine("Node ID: " + ThisNodeKeypair.Address.ToHexString());
+            System.Console.WriteLine("Private key: " + BitConverter.ToString(ThisNodeKeypair.PrivateKey).Replace("-", ""));
+            System.Console.WriteLine("Public key: " + BitConverter.ToString(ThisNodeKeypair.PublicKey).Replace("-", ""));
             KnownNodes.PrintBucketSummary();
+
+            try
+            {
+                Sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                Endpoint = new IPEndPoint(IPAddress.Any, 45678);
+                Sock.Bind(Endpoint);
+
+                while (true)
+                {
+                    ArrayList ReadSockets = new ArrayList();
+                    EndPoint RemoteEndPoint = null;
+                    byte[] ReceiveBuffer = null;
+
+                    ReadSockets.Add(Sock);
+                    Socket.Select(ReadSockets, null, null, 1000);
+
+                    if (ReadSockets.Contains(Sock))
+                    {
+                        // Network socket
+
+                        System.Console.WriteLine("Received information on network socket");
+
+                        Sock.ReceiveFrom(ReceiveBuffer, ref RemoteEndPoint);
+                    }
+                }
+            }
+            catch (Exception NetException)
+            {
+                System.Console.WriteLine("A network exception occured: " + NetException.ToString());
+            }
         }
 
         public NodeKeypair GenerateNodeKeypair()

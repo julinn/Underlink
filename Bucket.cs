@@ -41,13 +41,17 @@ namespace Underlink
         {
             int BucketID = GetBucketID(NewNode);
 
-            // First scan for the current node
+            // First see if we already know about this node,
+            // and simply update it with the new data if we do
 
             for (int n = 0; n < NodesPerBucket; n ++)
             {
-                if (ThisNode == NewNode)
+                if (Nodes[BucketID, n].Record.Address == NewNode.Record.Address)
+                {
+                    Nodes[BucketID, n] = NewNode;
                     return BucketID;
-            }
+                }
+            } 
 
             // Then scan for empty slots in the bucket
 
@@ -55,9 +59,9 @@ namespace Underlink
             {
                 if (Nodes[BucketID, n].Record.Address.IsZero())
                 {
-                    Nodes[BucketID, n] = NewNode;
+                    // System.Console.WriteLine("Bucket " + (BucketID + 1) + ": Added new node " + n);
 
-                   // System.Console.WriteLine("Bucket " + (BucketID + 1) + ": Added new node " + n);
+                    Nodes[BucketID, n] = NewNode;
                     return BucketID;
                 }
             }
