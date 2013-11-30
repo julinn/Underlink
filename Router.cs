@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using System.Diagnostics;
 using UCIS.NaCl;
 using UCIS.NaCl.crypto_box;
 
@@ -14,7 +15,7 @@ namespace Underlink
 {
     class Router
     {
-        enum Status
+        public enum RouterStatus
         {
             KEYGEN,
             BOOTSTRAP,
@@ -22,26 +23,34 @@ namespace Underlink
             HEALTHY
         };
 
-        NodeKeypair ThisNodeKeypair;
-        Node ThisNode;
+        private Node ThisNode;
+        private NodeKeypair ThisNodeKeypair;
 
-        Bucket KnownNodes;
+        private RouterStatus ThisNodeStatus;
+        private Bucket KnownNodes;
 
         private Socket Sock;
         private IPEndPoint Endpoint;
 
         public Router()
         {
+            ThisNodeStatus = RouterStatus.KEYGEN;
+
             ThisNodeKeypair = GenerateNodeKeypair();
             ThisNode = new Node(ThisNodeKeypair.Address, null);
 
             KnownNodes = new Bucket(ThisNode);
             KnownNodes.AddNode(ThisNode);
 
+            Debug.Assert(KnownNodes.Nodes[127, 0] == ThisNode,
+                         "The current node must be the first entry in the 128th bucket");
+
             System.Console.WriteLine("Node ID: " + ThisNodeKeypair.Address.ToHexString());
             System.Console.WriteLine("Private key: " + BitConverter.ToString(ThisNodeKeypair.PrivateKey).Replace("-", ""));
             System.Console.WriteLine("Public key: " + BitConverter.ToString(ThisNodeKeypair.PublicKey).Replace("-", ""));
             KnownNodes.PrintBucketSummary();
+
+            ThisNodeStatus = RouterStatus.BOOTSTRAP;
 
             try
             {
@@ -53,7 +62,9 @@ namespace Underlink
                 {
                     ArrayList ReadSockets = new ArrayList();
                     EndPoint RemoteEndPoint = null;
+
                     byte[] ReceiveBuffer = null;
+
 
                     ReadSockets.Add(Sock);
                     Socket.Select(ReadSockets, null, null, 1000);
@@ -65,6 +76,17 @@ namespace Underlink
                         System.Console.WriteLine("Received information on network socket");
 
                         Sock.ReceiveFrom(ReceiveBuffer, ref RemoteEndPoint);
+
+                        switch (ThisNodeStatus)
+                        {
+                            case RouterStatus.KEYGEN:
+                                continue;
+
+                            case RouterStatus.BOOTSTRAP:
+                            case RouterStatus.HEALTHY:
+                            case RouterStatus.ISOLATED:
+                                continue;
+                        }
                     }
                 }
             }
@@ -97,6 +119,11 @@ namespace Underlink
             ReturnNodeID.Address = new UInt128(AddressBuffer);
 
             return ReturnNodeID;
+        }
+
+        public RouterStatus GetRouterStatus()
+        {
+            return ThisNodeStatus;
         }
     }
 }
