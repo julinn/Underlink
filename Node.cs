@@ -13,7 +13,7 @@ namespace Underlink
     public struct NodeRecord
     {
         public UInt128 Address;
-        public IPEndPoint Endpoint;
+        public EndPoint Endpoint;
     }
 
     public struct NodeKeypair
@@ -93,7 +93,7 @@ namespace Underlink
 
             IntPtr Pointer = Marshal.AllocHGlobal(Length);
 
-            Marshal.StructureToPtr(GivenNodeRecord, Pointer, true);
+            Marshal.StructureToPtr(GivenNodeRecord, Pointer, false);
             Marshal.Copy(Pointer, ReturnByteArray, 0, Length);
             Marshal.FreeHGlobal(Pointer);
 

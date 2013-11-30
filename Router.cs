@@ -30,14 +30,14 @@ namespace Underlink
         private Bucket KnownNodes;
 
         private Socket Sock;
-        private IPEndPoint Endpoint;
 
         public Router()
         {
             ThisNodeStatus = RouterStatus.KEYGEN;
 
+            System.Console.WriteLine("Generating node ID and keypair...");
             ThisNodeKeypair = GenerateNodeKeypair();
-            ThisNode = new Node(ThisNodeKeypair.Address, null);
+            ThisNode = new Node(ThisNodeKeypair.Address, new IPEndPoint(IPAddress.Loopback, 45678));
 
             KnownNodes = new Bucket(ThisNode);
             KnownNodes.AddNode(ThisNode);
@@ -52,64 +52,75 @@ namespace Underlink
 
             ThisNodeStatus = RouterStatus.BOOTSTRAP;
 
-            try
+            Sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            Sock.Bind(ThisNode.Record.Endpoint);
+
+            while (true)
             {
-                Sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                Endpoint = new IPEndPoint(IPAddress.Any, 45678);
-                Sock.Bind(Endpoint);
+                ArrayList ReadSockets = new ArrayList();
+                EndPoint RemoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
+                EndPoint SendEndPoint = null;
 
-                while (true)
+                byte[] ReceiveBuffer = new byte[1500];
+                byte[] SendBuffer = null;
+                Message ReceiveMessage;
+                Message SendMessage = new Message();
+
+                ReadSockets.Add(Sock);
+                Socket.Select(ReadSockets, null, null, 10000000);
+
+                if (ReadSockets.Contains(Sock))
                 {
-                    ArrayList ReadSockets = new ArrayList();
-                    EndPoint RemoteEndPoint = null;
-                    EndPoint SendEndPoint = null;
+                    Sock.ReceiveFrom(ReceiveBuffer, ref RemoteEndPoint);
+                    ReceiveMessage = ProtoMarshal.CreateMessage(ReceiveBuffer);
 
-                    byte[] ReceiveBuffer = null;
-                    byte[] SendBuffer = null;
-                    Message ReceiveMessage;
-                    Message SendMessage = new Message();
+                    System.Console.WriteLine("Received " + ReceiveMessage.Type.ToString() + " message on socket");
+                    ProtoMarshal.PrintMessage(ReceiveMessage);
 
-                    ReadSockets.Add(Sock);
-                    Socket.Select(ReadSockets, null, null, 1000);
-
-                    if (ReadSockets.Contains(Sock))
+                    switch (ReceiveMessage.Type)
                     {
-                        Sock.ReceiveFrom(ReceiveBuffer, ref RemoteEndPoint);
-                        ReceiveMessage = ProtoMarshal.CreateMessage(ReceiveBuffer);
+                        case MessageType.Verify:
+                            SendMessage.Type = MessageType.VerifySuccess;
+                            SendMessage.LocalID = ThisNode.Record.Address;
+                            SendMessage.RemoteID = ReceiveMessage.LocalID;
+                            SendMessage.TTL = 24;
+                            SendMessage.Flags = 0;
+                            SendMessage.Payload = Record.CreateByteArray(ThisNode.Record);
+                            SendMessage.PayloadSize = SendMessage.Payload.Length;
+                            break;
 
-                        System.Console.WriteLine("Received " + ReceiveMessage.Type.ToString() + " message on socket");
+                        case MessageType.VerifySuccess:
+                            Node ReceivedNode = new Node(Record.CreateNodeRecord(ReceiveMessage.Payload));
+                            KnownNodes.AddNode(ReceivedNode);
+                            break;
+                    }
 
-                        switch (ReceiveMessage.Type)
-                        {
-                            case MessageType.Verify:
-                                SendMessage.Type = MessageType.VerifySuccess;
-                                SendMessage.LocalID = ThisNode.Record.Address;
-                                SendMessage.RemoteID = ReceiveMessage.LocalID;
-                                SendMessage.TTL = 24;
-                                SendMessage.Flags = 0;
-                                SendMessage.Payload = Record.CreateByteArray(ThisNode.Record);
-                                SendMessage.PayloadSize = SendMessage.Payload.Length;
-                                break;
+                    if (SendMessage.LocalID != null &&
+                        SendMessage.RemoteID != null &
+                        SendMessage.Type != MessageType.IPPacket)
+                    {
+                        SendBuffer = ProtoMarshal.CreateByteArray(SendMessage);
+                        SendEndPoint = KnownNodes.GetClosestNode(SendMessage.RemoteID, 0).Record.Endpoint;
 
-                            case MessageType.VerifySuccess:
-                                Node ReceivedNode = new Node(Record.CreateNodeRecord(ReceiveMessage.Payload));
-                                KnownNodes.AddNode(ReceivedNode);
-                                break;
-                        }
-
-                        if (SendMessage.RemoteID != null)
-                        {
-                            SendBuffer = ProtoMarshal.CreateByteArray(SendMessage);
-                            SendEndPoint = KnownNodes.GetClosestNode(SendMessage.RemoteID, 0).Record.Endpoint;
-
-                            Sock.SendTo(SendBuffer, SendEndPoint);
-                        }
+                        Sock.SendTo(SendBuffer, SendEndPoint);
                     }
                 }
-            }
-            catch (Exception NetException)
-            {
-                System.Console.WriteLine("A network exception occured: " + NetException.ToString());
+                    else
+                {
+                    Message VerifyTest = new Message();
+                    VerifyTest.LocalID = ThisNode.Record.Address;
+                    VerifyTest.RemoteID = ThisNode.Record.Address;
+                    VerifyTest.Type = MessageType.Verify;
+                    VerifyTest.Flags = 0;
+                    VerifyTest.Payload = Record.CreateByteArray(ThisNode.Record);
+                    VerifyTest.PayloadSize = VerifyTest.Payload.Length;
+
+                    byte[] VerifyTestBuffer = ProtoMarshal.CreateByteArray(VerifyTest);
+                    Node VerifyTestNode = KnownNodes.GetClosestNode(VerifyTest.RemoteID, 0);
+                    EndPoint VerifyTestEndPoint = VerifyTestNode.Record.Endpoint;
+
+                    Sock.SendTo(VerifyTestBuffer, VerifyTestEndPoint);
+                }
             }
         }
 

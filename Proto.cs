@@ -38,7 +38,7 @@ namespace Underlink
 
             IntPtr Pointer = Marshal.AllocHGlobal(Length);
 
-            Marshal.StructureToPtr(GivenMessage, Pointer, true);
+            Marshal.StructureToPtr(GivenMessage, Pointer, false);
             Marshal.Copy(Pointer, ReturnByteArray, 0, Length);
             Marshal.FreeHGlobal(Pointer);
 
@@ -57,6 +57,14 @@ namespace Underlink
             Marshal.FreeHGlobal(Pointer);
 
             return ReturnMessage;
+        }
+
+        public static void PrintMessage(Message GivenMessage)
+        {
+            System.Console.WriteLine("Source: " + GivenMessage.LocalID.ToHexString());
+            System.Console.WriteLine("Destination: " + GivenMessage.RemoteID.ToHexString());
+            System.Console.WriteLine("Type: " + GivenMessage.Type.ToString() + ", Length: " + GivenMessage.PayloadSize.ToString() + ", Flags: " + GivenMessage.Flags.ToString() + ", TTL: " + GivenMessage.TTL.ToString());
+            System.Console.WriteLine();
         }
     }
 }
