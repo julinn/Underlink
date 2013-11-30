@@ -62,30 +62,47 @@ namespace Underlink
                 {
                     ArrayList ReadSockets = new ArrayList();
                     EndPoint RemoteEndPoint = null;
+                    EndPoint SendEndPoint = null;
 
                     byte[] ReceiveBuffer = null;
-
+                    byte[] SendBuffer = null;
+                    Message ReceiveMessage;
+                    Message SendMessage = new Message();
 
                     ReadSockets.Add(Sock);
                     Socket.Select(ReadSockets, null, null, 1000);
 
                     if (ReadSockets.Contains(Sock))
                     {
-                        // Network socket
-
-                        System.Console.WriteLine("Received information on network socket");
-
                         Sock.ReceiveFrom(ReceiveBuffer, ref RemoteEndPoint);
+                        ReceiveMessage = ProtoMarshal.CreateMessage(ReceiveBuffer);
 
-                        switch (ThisNodeStatus)
+                        System.Console.WriteLine("Received " + ReceiveMessage.Type.ToString() + " message on socket");
+
+                        switch (ReceiveMessage.Type)
                         {
-                            case RouterStatus.KEYGEN:
-                                continue;
+                            case MessageType.Verify:
+                                SendMessage.Type = MessageType.VerifySuccess;
+                                SendMessage.LocalID = ThisNode.Record.Address;
+                                SendMessage.RemoteID = ReceiveMessage.LocalID;
+                                SendMessage.TTL = 24;
+                                SendMessage.Flags = 0;
+                                SendMessage.Payload = Record.CreateByteArray(ThisNode.Record);
+                                SendMessage.PayloadSize = SendMessage.Payload.Length;
+                                break;
 
-                            case RouterStatus.BOOTSTRAP:
-                            case RouterStatus.HEALTHY:
-                            case RouterStatus.ISOLATED:
-                                continue;
+                            case MessageType.VerifySuccess:
+                                Node ReceivedNode = new Node(Record.CreateNodeRecord(ReceiveMessage.Payload));
+                                KnownNodes.AddNode(ReceivedNode);
+                                break;
+                        }
+
+                        if (SendMessage.RemoteID != null)
+                        {
+                            SendBuffer = ProtoMarshal.CreateByteArray(SendMessage);
+                            SendEndPoint = KnownNodes.GetClosestNode(SendMessage.RemoteID, 0).Record.Endpoint;
+
+                            Sock.SendTo(SendBuffer, SendEndPoint);
                         }
                     }
                 }

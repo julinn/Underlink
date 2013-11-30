@@ -21,6 +21,11 @@ namespace Underlink
 
         public int GetBucketID(Node CheckNode)
         {
+            return GetBucketID(CheckNode.Record.Address);
+        }
+
+        public int GetBucketID(UInt128 CheckAddress)
+        {
             UInt128 Bitmask = new UInt128(UInt64.MaxValue, UInt64.MaxValue);
 
             for (int i = 0; i < NodeAddressLength; i ++)
@@ -30,7 +35,7 @@ namespace Underlink
                 else
                     Bitmask.Big <<= 1;
 
-                if (ThisNode.Record.Address.MaskEquals(CheckNode.Record.Address, Bitmask))
+                if (ThisNode.Record.Address.MaskEquals(CheckAddress, Bitmask))
                     return NodeAddressLength - i - 1;
             }
 
@@ -93,8 +98,13 @@ namespace Underlink
 
         public Node GetClosestNode(Node SearchNode, int Steps)
         {
-            int StartBucket = GetBucketID(SearchNode);
-            if (StartBucket == 0 || SearchNode == ThisNode)
+            return GetClosestNode(SearchNode.Record.Address, Steps);
+        }
+
+        public Node GetClosestNode(UInt128 SearchAddress, int Steps)
+        {
+            int StartBucket = GetBucketID(SearchAddress);
+            if (StartBucket == 0 || SearchAddress == ThisNode.Record.Address)
                 return ThisNode;
 
             UInt128 LastDistance = new UInt128(0, 0);
@@ -122,13 +132,13 @@ namespace Underlink
                     if (SortedNodes[n] == null)
                         continue;
 
-                    if (SortedNodes[n] == SearchNode)
+                    if (SortedNodes[n].Record.Address == SearchAddress)
                         return SortedNodes[n];
 
-                    if (SortedNodes[n].GetDistance(SearchNode) < LastDistance)
+                    if (SortedNodes[n].GetDistance(SearchAddress) < LastDistance)
                     {
                         ReturnNode = SortedNodes[n];
-                        LastDistance = SortedNodes[n].GetDistance(SearchNode);
+                        LastDistance = SortedNodes[n].GetDistance(SearchAddress);
                     }
                 }
             }

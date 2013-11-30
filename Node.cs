@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 using UCIS.NaCl;
 using UCIS.NaCl.crypto_box;
 
@@ -22,10 +23,17 @@ namespace Underlink
         public byte[] PublicKey;
     }
 
-    struct Node
+    public struct Node
     {
         public NodeRecord Record;
         public UInt32 LastCommunication;
+
+        public Node(NodeRecord Record)
+        {
+            this.Record = Record;
+
+            this.LastCommunication = 0;
+        }
 
         public Node(UInt128 Address, IPEndPoint Endpoint)
         {
@@ -67,7 +75,43 @@ namespace Underlink
 
         public UInt128 GetDistance(Node CompareNode)
         {
-            return this.Record.Address.Xor(CompareNode.Record.Address);
+            return GetDistance(CompareNode.Record.Address);
+        }
+
+        public UInt128 GetDistance(UInt128 CompareAddress)
+        {
+            return this.Record.Address.Xor(CompareAddress);
+        }
+    }
+
+    public class Record
+    {
+        public static byte[] CreateByteArray(NodeRecord GivenNodeRecord)
+        {
+            int Length = Marshal.SizeOf(GivenNodeRecord);
+            byte[] ReturnByteArray = new byte[Length];
+
+            IntPtr Pointer = Marshal.AllocHGlobal(Length);
+
+            Marshal.StructureToPtr(GivenNodeRecord, Pointer, true);
+            Marshal.Copy(Pointer, ReturnByteArray, 0, Length);
+            Marshal.FreeHGlobal(Pointer);
+
+            return ReturnByteArray;
+        }
+
+        public static NodeRecord CreateNodeRecord(byte[] GivenByteArray)
+        {
+            NodeRecord ReturnNodeRecord = new NodeRecord();
+            int Length = Marshal.SizeOf(ReturnNodeRecord);
+
+            IntPtr Pointer = Marshal.AllocHGlobal(Length);
+
+            Marshal.Copy(GivenByteArray, 0, Pointer, Length);
+            ReturnNodeRecord = (NodeRecord)Marshal.PtrToStructure(Pointer, ReturnNodeRecord.GetType());
+            Marshal.FreeHGlobal(Pointer);
+
+            return ReturnNodeRecord;
         }
     }
 }

@@ -20,19 +20,18 @@ namespace Underlink
 
     public struct Message
     {
-        MessageType Type;
-        int PayloadSize;
-        UInt128 LocalID;
-        UInt128 RemoteID;
-        int TTL;
-        int Flags;
-
-
+        public MessageType Type;
+        public UInt128 LocalID;
+        public UInt128 RemoteID;
+        public int TTL;
+        public int Flags;
+        public int PayloadSize;
+        public byte[] Payload;
     }
 
-    class Proto
+    class ProtoMarshal
     {
-        public byte[] CreateByteArray(Message GivenMessage)
+        public static byte[] CreateByteArray(Message GivenMessage)
         {
             int Length = Marshal.SizeOf(GivenMessage);
             byte[] ReturnByteArray = new byte[Length];
@@ -46,7 +45,7 @@ namespace Underlink
             return ReturnByteArray;
         }
 
-        public Message CreateMessage(byte[] GivenByteArray)
+        public static Message CreateMessage(byte[] GivenByteArray)
         {
             Message ReturnMessage = new Message();
             int Length = Marshal.SizeOf(ReturnMessage);
