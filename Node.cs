@@ -10,9 +10,10 @@ using UCIS.NaCl.crypto_box;
 
 namespace Underlink
 {
-    public struct NodeRecord
+    public unsafe struct NodeRecord
     {
         public UInt128 Address;
+        public byte[] PublicKey;
         public EndPoint Endpoint;
     }
 
@@ -35,10 +36,11 @@ namespace Underlink
             this.LastCommunication = 0;
         }
 
-        public Node(UInt128 Address, IPEndPoint Endpoint)
+        public Node(UInt128 Address, IPEndPoint Endpoint, byte[] PublicKey)
         {
             this.Record.Address = Address;
             this.Record.Endpoint = Endpoint;
+            this.Record.PublicKey = PublicKey;
 
             this.LastCommunication = 0;
         }

@@ -16,37 +16,47 @@ namespace Underlink
         public static IList<NetworkAdapterWin> GetAdapters()
         {
             const string AdapterKey = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}";
-            RegistryKey regAdapters = Registry.LocalMachine.OpenSubKey(AdapterKey, true);
+            RegistryKey regAdapters = Registry.LocalMachine.OpenSubKey(AdapterKey, false);
 
             List<NetworkAdapterWin> adapters = new List<NetworkAdapterWin>();
 
+            /*
             foreach (System.Net.NetworkInformation.NetworkInterface ni in
                      System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
             {
-                Console.WriteLine("X={0}", ni.Description);
-                Console.WriteLine("X={0}", ni.GetPhysicalAddress());
-                Console.WriteLine("X={0}", ni.Id);
-                Console.WriteLine("X={0}", ni.IsReceiveOnly);
-                Console.WriteLine("X={0}", ni.Name);
-                Console.WriteLine("X={0}", ni.NetworkInterfaceType);
-                Console.WriteLine("X={0}", ni.OperationalStatus);
-                Console.WriteLine("X={0}", ni.Speed);
+                Console.WriteLine("Description={0}", ni.Description);
+                Console.WriteLine("PhysicalAddress={0}", ni.GetPhysicalAddress());
+                Console.WriteLine("ID={0}", ni.Id);
+                Console.WriteLine("IsReceiveOnly={0}", ni.IsReceiveOnly);
+                Console.WriteLine("Name={0}", ni.Name);
+                Console.WriteLine("NICType={0}", ni.NetworkInterfaceType);
+                Console.WriteLine("OperationalStatus={0}", ni.OperationalStatus);
+                Console.WriteLine("NICSpeed={0}", ni.Speed);
+                Console.WriteLine();
             }
+             */
 
             foreach (string x in regAdapters.GetSubKeyNames())
             {
-                RegistryKey regAdapter = regAdapters.OpenSubKey(x);
-                object id = regAdapter.GetValue("ComponentId");
-
-                if (id != null && (id.ToString().StartsWith("tap0801") ||
-                    id.ToString().StartsWith("tap0901")))
+                try
                 {
-                    string devGuid = regAdapter.GetValue("NetCfgInstanceId").ToString();
+                    RegistryKey regAdapter = regAdapters.OpenSubKey(x, false);
+                    object id = regAdapter.GetValue("ComponentId");
 
-                    foreach (String n in regAdapter.GetValueNames())
-                        Console.WriteLine(n + "=" + regAdapter.GetValue(n).ToString());
+                    if (id != null && (id.ToString().StartsWith("tap0801") ||
+                        id.ToString().StartsWith("tap0901")))
+                    {
+                        string devGuid = regAdapter.GetValue("NetCfgInstanceId").ToString();
 
-                    adapters.Add(new NetworkAdapterWin(devGuid));
+                        foreach (String n in regAdapter.GetValueNames())
+                            Console.WriteLine(n + "=" + regAdapter.GetValue(n).ToString());
+
+                        adapters.Add(new NetworkAdapterWin(devGuid));
+                    }
+                }
+                catch (Exception ThrownException)
+                {
+                   // System.Console.WriteLine(ThrownException.StackTrace.ToString());
                 }
             }
 
