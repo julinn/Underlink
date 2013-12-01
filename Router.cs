@@ -108,6 +108,21 @@ namespace Underlink
             Thread TUNTAPThread = new Thread(() =>
             {
                 IList<NetworkAdapterWin> Adapters = NetworkAdapterWin.GetAdapters();
+                LocalEndpoint Adapter = Adapters[0].Open();
+
+                byte[] ReceiveBuffer = new byte[1500];
+
+                while (true)
+                {
+                    if (!Adapter.CanRead)
+                    {
+                        Thread.Sleep(1000);
+                        continue;
+                    }
+
+                    Adapter.Read(ReceiveBuffer, 0, 1500);
+                    System.Console.WriteLine("Buffer bytes: " + ReceiveBuffer.Length);
+                }
 
                 System.Console.WriteLine(Adapters.ToString());
             });
