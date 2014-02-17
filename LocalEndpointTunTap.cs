@@ -56,7 +56,7 @@ namespace Underlink
                 }
                 catch (Exception ThrownException)
                 {
-                   // System.Console.WriteLine(ThrownException.StackTrace.ToString());
+                   System.Console.WriteLine(ThrownException.StackTrace.ToString());
                 }
             }
 

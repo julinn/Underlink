@@ -38,7 +38,7 @@ namespace Underlink
 
             System.Console.WriteLine("Generating node ID and keypair...");
             ThisNodeKeypair = GenerateNodeKeypair();
-            ThisNode = new Node(ThisNodeKeypair.Address, new IPEndPoint(IPAddress.Loopback, 45678), ThisNodeKeypair.PublicKey);
+            ThisNode = new Node(ThisNodeKeypair.Address, new IPEndPoint(IPAddress.Loopback, 45678), ThisNodeKeypair.PublicKey, 0x00);
 
             KnownNodes = new Bucket(ThisNode);
             KnownNodes.AddNode(ThisNode);
@@ -124,7 +124,7 @@ namespace Underlink
                     System.Console.WriteLine("Buffer bytes: " + ReceiveBuffer.Length);
                 }
 
-                System.Console.WriteLine(Adapters.ToString());
+                // System.Console.WriteLine(Adapters.ToString());
             });
 
             SocketThread.Start();
