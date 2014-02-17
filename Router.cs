@@ -60,75 +60,62 @@ namespace Underlink
             {
                 while (true)
                 {
-                    ArrayList ReadSockets = new ArrayList();
                     EndPoint RemoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
                     EndPoint SendEndPoint = null;
 
                     byte[] ReceiveBuffer = new byte[1500];
-                    byte[] SendBuffer = null;
 
-                    ReadSockets.Add(Sock);
-                    Socket.Select(ReadSockets, null, null, 10000000);
+                    Sock.ReceiveFrom(ReceiveBuffer, ref RemoteEndPoint);
+                    Message ReceiveMessage = ProtoMarshal.CreateMessage(ReceiveBuffer);
+                    Message SendMessage = SendMessage = ProcessMessage(ReceiveMessage);
 
-                    if (ReadSockets.Contains(Sock))
+                    if (SendMessage.LocalID != null &&
+                        SendMessage.RemoteID != null &
+                        SendMessage.Type != MessageType.IPPacket)
                     {
-                        Sock.ReceiveFrom(ReceiveBuffer, ref RemoteEndPoint);
-                        Message ReceiveMessage = ProtoMarshal.CreateMessage(ReceiveBuffer);
-                        Message SendMessage = SendMessage = ProcessMessage(ReceiveMessage);
+                        byte[] SendBuffer = ProtoMarshal.CreateByteArray(SendMessage);
+                        SendEndPoint = KnownNodes.GetClosestNode(SendMessage.RemoteID, 0).Record.Endpoint;
 
-                        if (SendMessage.LocalID != null &&
-                            SendMessage.RemoteID != null &
-                            SendMessage.Type != MessageType.IPPacket)
-                        {
-                            SendBuffer = ProtoMarshal.CreateByteArray(SendMessage);
-                            SendEndPoint = KnownNodes.GetClosestNode(SendMessage.RemoteID, 0).Record.Endpoint;
-
-                            Sock.SendTo(SendBuffer, SendEndPoint);
-                        }
-                    }
-                        else
-                    {
-                        Message VerifyTest = new Message();
-                        VerifyTest.LocalID = ThisNode.Record.Address;
-                        VerifyTest.RemoteID = ThisNode.Record.Address;
-                        VerifyTest.Type = MessageType.Verify;
-                        VerifyTest.Flags = 0;
-                        VerifyTest.Payload = Record.CreateByteArray(ThisNode.Record);
-                        VerifyTest.PayloadSize = VerifyTest.Payload.Length;
-
-                        byte[] VerifyTestBuffer = ProtoMarshal.CreateByteArray(VerifyTest);
-                        Node VerifyTestNode = KnownNodes.GetClosestNode(VerifyTest.RemoteID, 0);
-                        EndPoint VerifyTestEndPoint = VerifyTestNode.Record.Endpoint;
-
-                        Sock.SendTo(VerifyTestBuffer, VerifyTestEndPoint);
+                        Sock.SendTo(SendBuffer, SendEndPoint);
                     }
                 }
             });
+            
+            Timer VerifyTimer = new Timer((Object state) =>
+            {
+                Message VerifyTest = new Message();
+                VerifyTest.LocalID = ThisNode.Record.Address;
+                VerifyTest.RemoteID = ThisNode.Record.Address;
+                VerifyTest.Type = MessageType.Verify;
+                VerifyTest.Flags = 0;
+                VerifyTest.Payload = Record.CreateByteArray(ThisNode.Record);
+                VerifyTest.PayloadSize = VerifyTest.Payload.Length;
+                byte[] VerifyTestBuffer = ProtoMarshal.CreateByteArray(VerifyTest);
+                Node VerifyTestNode = KnownNodes.GetClosestNode(VerifyTest.RemoteID, 0);
+                EndPoint VerifyTestEndPoint = VerifyTestNode.Record.Endpoint;
+                Sock.SendTo(VerifyTestBuffer, VerifyTestEndPoint);
+            });
+
 
             Thread TUNTAPThread = new Thread(() =>
             {
                 IList<NetworkAdapterWin> Adapters = NetworkAdapterWin.GetAdapters();
                 LocalEndpoint Adapter = Adapters[0].Open();
+               // Adapter.SetStatus(true);
 
                 byte[] ReceiveBuffer = new byte[1500];
 
                 while (true)
                 {
-                    if (!Adapter.CanRead)
-                    {
-                        Thread.Sleep(1000);
-                        continue;
-                    }
-
-                    Adapter.Read(ReceiveBuffer, 0, 1500);
-                    System.Console.WriteLine("Buffer bytes: " + ReceiveBuffer.Length);
+                    int ReceiveLength = Adapter.Read(ReceiveBuffer, 0, 1500);
+                    System.Console.WriteLine("Buffer bytes: " + ReceiveLength);
+                    //Todo: route packet in ReceiveBuffer (with length ReceiveLength)
                 }
-
-                // System.Console.WriteLine(Adapters.ToString());
             });
 
             SocketThread.Start();
             TUNTAPThread.Start();
+            VerifyTimer.Change(10000, 10000);
         }
 
         public Message ProcessMessage(Message ReceiveMessage)
